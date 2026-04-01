@@ -1,0 +1,544 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DSA Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI Emoji','Apple Color Emoji',sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
+#pw-gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e3a5f 0%,#2d6a9f 100%)}
+.pw-box{background:#fff;border-radius:16px;padding:40px 36px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.pw-icon{font-size:48px;margin-bottom:16px}
+.pw-box h2{font-size:20px;font-weight:700;color:#1e3a5f;margin-bottom:8px}
+.pw-box p{font-size:13px;color:#64748b;margin-bottom:24px}
+.pw-box input{width:100%;padding:12px 14px;font-size:15px;border:2px solid #e2e8f0;border-radius:8px;outline:none;text-align:center;letter-spacing:3px;transition:border-color .2s;font-family:inherit}
+.pw-box input:focus{border-color:#2d6a9f}
+.pw-box input.shake{border-color:#ef4444;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pw-err{color:#ef4444;font-size:12px;margin-top:8px;min-height:18px}
+.btn-enter{margin-top:16px;width:100%;padding:12px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;font-family:inherit}
+.btn-enter:hover{background:#2d6a9f}
+#cfg-banner{display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:14px 18px;margin:16px 20px;font-size:13px;color:#92400e;line-height:1.6}
+#cfg-banner b{color:#78350f}
+#cfg-banner code{background:#fde68a;padding:1px 5px;border-radius:3px;font-size:12px}
+#app{display:none;flex-direction:column;min-height:100vh}
+.hdr{background:#1e3a5f;color:#fff;height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-title{font-size:19px;font-weight:700}
+.hdr-right{display:flex;align-items:center;gap:8px}
+#save-status{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.12);color:#94a3b8}
+#save-status.saving{color:#fff;background:rgba(255,255,255,.18)}
+#save-status.saved{color:#86efac;background:rgba(134,239,172,.15)}
+#save-status.error{color:#fca5a5;background:rgba(252,165,165,.15)}
+.btn-ghost{background:rgba(255,255,255,.1);color:#e2e8f0;border:1px solid rgba(255,255,255,.22);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;transition:background .2s;white-space:nowrap;font-family:inherit}
+.btn-ghost:hover{background:rgba(255,255,255,.2)}
+.content{flex:1;padding:20px;max-width:1200px;margin:0 auto;width:100%}
+.card{background:#fff;border-radius:12px;padding:22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+.card-title{font-size:15px;font-weight:700;color:#1e3a5f;margin-bottom:14px}
+.hla-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hla-group label{display:block;font-size:11px;font-weight:600;color:#64748b;letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
+.hla-group input{width:100%;padding:9px 11px;font-size:13px;border:2px solid #e2e8f0;border-radius:7px;outline:none;transition:border-color .2s;font-family:inherit}
+.hla-group input:focus{border-color:#2d6a9f}
+.hla-hint{font-size:11px;color:#94a3b8;margin-top:10px}
+.hla-hint b{color:#475569}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f1f5f9;padding:9px 11px;text-align:left;font-size:11px;font-weight:700;color:#475569;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;text-transform:uppercase}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s}
+tbody tr:hover{background:#fafcff}
+tbody tr:last-child{border-bottom:none}
+td{padding:7px 9px;vertical-align:middle}
+.col-name{width:110px}.col-pra{min-width:200px}.col-flag{width:80px;text-align:center}.col-result{width:260px}.col-del{width:36px;text-align:center}
+td input[type="text"],td textarea{width:100%;padding:7px 9px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:6px;outline:none;font-family:inherit;transition:border-color .2s;resize:vertical}
+td input[type="text"]:focus,td textarea:focus{border-color:#2d6a9f}
+td textarea{min-height:60px;line-height:1.5}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-pos{background:#fee2e2;color:#dc2626}
+.badge-neg{background:#dcfce7;color:#16a34a}
+.badge-pend{background:#f1f5f9;color:#94a3b8}
+.dsa-line{font-size:12px;line-height:1.7;margin:1px 0}
+.s-strong{color:#dc2626;font-weight:700}.s-moderate{color:#ea580c;font-weight:600}.s-mild{color:#2563eb;font-weight:500}.s-weak{color:#64748b}
+.btn-del{background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:15px;padding:3px 5px;border-radius:4px;line-height:1;transition:color .15s;font-family:inherit}
+.btn-del:hover{color:#ef4444}
+.action-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:#1e3a5f;color:#fff}.btn-primary:hover{background:#2d6a9f}
+.btn-secondary{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}.btn-secondary:hover{background:#e2e8f0}
+.btn-success{background:#16a34a;color:#fff}.btn-success:hover{background:#15803d}
+.btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
+.note{font-size:11px;color:#94a3b8;margin-top:9px}
+#hist-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4)}
+#hist-panel{position:fixed;top:0;right:0;bottom:0;z-index:201;width:390px;max-width:95vw;background:#fff;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.15);transform:translateX(100%);transition:transform .28s ease}
+#hist-panel.open{transform:translateX(0)}
+.hp-hdr{background:#1e3a5f;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hp-hdr h3{font-size:14px;font-weight:600}
+.hp-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 3px;line-height:1}
+#hist-list{flex:1;overflow-y:auto;padding:10px}
+.h-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px 13px;margin-bottom:9px;transition:border-color .15s}
+.h-item:hover{border-color:#93c5fd}
+.h-item.active{border-color:#1e3a5f;background:#eff6ff}
+.h-hla{font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-meta{font-size:11px;color:#64748b;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.h-dsa{background:#fee2e2;color:#dc2626;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700}
+.h-btns{display:flex;gap:5px;margin-top:7px}
+.h-btn{flex:1;padding:4px 8px;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;border:none;font-family:inherit}
+.h-btn-load{background:#1e3a5f;color:#fff}.h-btn-load:hover{background:#2d6a9f}
+.h-btn-del{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}.h-btn-del:hover{background:#fee2e2}
+.h-empty{text-align:center;color:#94a3b8;padding:36px 16px;font-size:13px}
+.pw-chg-section{border-top:1px solid #e2e8f0;padding:18px 22px;background:#f8fafc}
+.pw-chg-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#64748b;background:none;border:none;font-family:inherit;padding:0}
+.pw-chg-toggle:hover{color:#1e3a5f}
+.pw-chg-body{display:none}
+.pw-chg-fields{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.pw-chg-fields input{padding:8px 11px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:7px;outline:none;font-family:inherit;transition:border-color .2s}
+.pw-chg-fields input:focus{border-color:#2d6a9f}
+.pw-chg-fields .btn-pw-save{padding:8px;background:#1e3a5f;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.pw-chg-fields .btn-pw-save:hover{background:#2d6a9f}
+#pw-chg-msg{font-size:12px;margin-top:5px;min-height:16px}
+#pw-chg-msg.ok{color:#16a34a}
+#pw-chg-msg.err{color:#dc2626}
+footer{background:#fff;border-top:1px solid #e2e8f0;padding:12px 22px;text-align:center;font-size:11px;color:#94a3b8}
+@media(max-width:680px){
+  .hla-grid{grid-template-columns:repeat(2,1fr)}
+  #hist-panel{width:100vw}
+  .action-bar{flex-direction:column}
+  .btn{width:100%;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div id="pw-gate">
+  <div class="pw-box">
+    <div class="pw-icon">🔒</div>
+    <h2>DSA Detector</h2>
+    <p>비밀번호를 입력하세요</p>
+    <input id="pw-input" type="password" placeholder="비밀번호"/>
+    <div id="pw-err" class="pw-err"></div>
+    <button class="btn-enter" id="pw-btn">입장</button>
+  </div>
+</div>
+
+<div id="cfg-banner">
+  ⚠️ <b>Supabase 연결 전 임시 모드입니다.</b>
+  저장 데이터가 <b>이 브라우저에만</b> 유지됩니다. 다른 기기와 공유하려면
+  <code>SUPABASE_URL</code> 과 <code>SUPABASE_ANON_KEY</code> 를 설정하세요.
+</div>
+
+<div id="hist-overlay"></div>
+<div id="hist-panel">
+  <div class="hp-hdr">
+    <h3>📋 저장된 분석 내역</h3>
+    <button class="hp-close" id="btn-hp-close">✕</button>
+  </div>
+  <div id="hist-list"><p class="h-empty">저장된 내역이 없습니다.</p></div>
+</div>
+
+<div id="app">
+  <header class="hdr">
+    <div class="hdr-title">🔬 DSA Detector</div>
+    <div class="hdr-right">
+      <span id="save-status">—</span>
+      <button class="btn-ghost" id="btn-new">＋ 새 분석</button>
+      <button class="btn-ghost" id="btn-history">📋 이력</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="card">
+      <div class="card-title">🧬 Donor HLA Typing</div>
+      <div class="hla-grid">
+        <div class="hla-group"><label>HLA-A</label><input id="hla-a" type="text" placeholder="예: 2, 24  또는  A2, A24"/></div>
+        <div class="hla-group"><label>HLA-B</label><input id="hla-b" type="text" placeholder="예: 35, 51  또는  B35, B51"/></div>
+        <div class="hla-group"><label>HLA-DR</label><input id="hla-dr" type="text" placeholder="예: 4, 15  또는  DR4, DR15"/></div>
+        <div class="hla-group"><label>HLA-DQ</label><input id="hla-dq" type="text" placeholder="예: 7, 8  또는  DQ7, DQ8"/></div>
+      </div>
+      <p class="hla-hint">💡 숫자만 입력해도 됩니다. 예: A칸에 <b>2, 24</b> 입력 → A2, A24로 처리</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🩺 Recipient DSA 분석</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-name">이름</th>
+              <th class="col-pra">PRA</th>
+              <th class="col-flag">DSA 여부</th>
+              <th class="col-result">DSA (항목)</th>
+              <th class="col-del"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btn-analyze">▶ 분석 실행</button>
+        <button class="btn btn-secondary" id="btn-add">＋ Recipient 추가</button>
+        <button class="btn btn-success" id="btn-export">⬇ Excel 내보내기</button>
+        <button class="btn btn-danger" id="btn-reset">↺ 초기화</button>
+      </div>
+      <p class="note">💾 입력 내용은 자동 저장되어 모든 사용자와 공유됩니다.</p>
+    </div>
+  </main>
+
+  <div class="pw-chg-section">
+    <button class="pw-chg-toggle" id="pw-chg-toggle">🔑 비밀번호 변경 <span id="pw-arrow">▼</span></button>
+    <div class="pw-chg-body" id="pw-chg-body">
+      <div class="pw-chg-fields">
+        <input id="pw-cur" type="password" placeholder="현재 비밀번호"/>
+        <input id="pw-new" type="password" placeholder="새 비밀번호"/>
+        <input id="pw-con" type="password" placeholder="새 비밀번호 확인"/>
+        <button class="btn-pw-save" id="btn-pw-save">변경</button>
+      </div>
+      <div id="pw-chg-msg"></div>
+    </div>
+  </div>
+
+  <footer>⚕ DSA Detector — 임상 의사결정 보조 도구입니다. 최종 판단은 전문의에게 확인하십시오.</footer>
+</div>
+
+<script>
+/* ================================================================
+   ★★★ 설정 — 여기 두 줄만 수정하세요 ★★★
+   Supabase > Project Settings > API 에서 복사
+================================================================ */
+const SUPABASE_URL      = 'https://kiuiyczixreveypolhzu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpdWl5Y3ppeHJldmV5cG9saHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOj';
+
+/* 키 설정 여부 자동 감지 */
+const USE_SB = SUPABASE_URL !== 'https://kiuiyczixreveypolhzu.supabase.co' && SUPABASE_ANON_KEY !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpdWl5Y3ppeHJldmV5cG9saHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOj';
+
+const T_SESS = 'dsa_sessions';
+const T_CFG  = 'dsa_config';
+let sessionId = null, saveTimer = null, histData = [];
+
+const $   = id => document.getElementById(id);
+const esc = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const safeJSON = (s,d) => { try{ return JSON.parse(s)||d; }catch{ return d; } };
+const genId    = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function fmtTime(ms){ if(!ms) return ''; const d=new Date(+ms),p=n=>String(n).padStart(2,'0'); return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+/* ================================================================
+   Supabase REST 헬퍼
+================================================================ */
+const SB = {
+  h(extra={}) {
+    return { 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Prefer':'return=representation', ...extra };
+  },
+  async q(path, opts={}) {
+    const res = await fetch(SUPABASE_URL+'/rest/v1/'+path, { headers:this.h(), ...opts });
+    if(!res.ok) throw new Error(await res.text());
+    const txt = await res.text();
+    return txt ? JSON.parse(txt) : null;
+  },
+  async list(table, qs='')   { return this.q(`${table}?${qs}`, { headers:this.h({'Prefer':''}) }); },
+  async get(table, id)       { const r=await this.list(table,`id=eq.${id}`); return r?.[0]||null; },
+  async insert(table, data)  { const r=await this.q(table,{method:'POST',body:JSON.stringify(data)}); return Array.isArray(r)?r[0]:r; },
+  async update(table, id, d) { const r=await this.q(`${table}?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(d)}); return Array.isArray(r)?r[0]:r; },
+  async upsert(table, data)  { const r=await this.q(table,{method:'POST',headers:this.h({'Prefer':'return=representation,resolution=merge-duplicates'}),body:JSON.stringify(data)}); return Array.isArray(r)?r[0]:r; },
+  async del(table, id)       { await this.q(`${table}?id=eq.${id}`,{method:'DELETE',headers:this.h({'Prefer':''})}); },
+};
+
+/* ================================================================
+   localStorage 폴백 헬퍼
+================================================================ */
+const LS = {
+  all(k)      { return safeJSON(localStorage.getItem(k),[]); },
+  set(k,v)    { localStorage.setItem(k,JSON.stringify(v)); },
+  sessList()  { return [...this.all(T_SESS)].sort((a,b)=>(b.saved_at||0)-(a.saved_at||0)); },
+  sessGet(id) { return this.all(T_SESS).find(r=>r.id===id)||null; },
+  sessSave(d) {
+    if(d.id){ this.set(T_SESS,this.all(T_SESS).map(r=>r.id===d.id?{...r,...d}:r)); return d; }
+    const row={...d,id:genId(),created_at:Date.now()}; const a=this.all(T_SESS); a.unshift(row); this.set(T_SESS,a); return row;
+  },
+  sessDel(id) { this.set(T_SESS,this.all(T_SESS).filter(r=>r.id!==id)); },
+  cfgGet(k)   { return this.all(T_CFG).find(r=>r.id===k)||null; },
+  cfgSet(k,v) { const a=this.all(T_CFG),i=a.findIndex(r=>r.id===k); if(i>=0)a[i].value=v;else a.push({id:k,value:v}); this.set(T_CFG,a); return {id:k,value:v}; },
+};
+
+/* ================================================================
+   통합 DB 어댑터
+================================================================ */
+const DB = {
+  async sessList() {
+    if(USE_SB) return SB.list(T_SESS,'select=*&order=saved_at.desc&limit=100');
+    return LS.sessList();
+  },
+  async sessGet(id) {
+    if(USE_SB) return SB.get(T_SESS,id);
+    return LS.sessGet(id);
+  },
+  async sessSave(data) {
+    if(USE_SB) return data.id ? SB.update(T_SESS,data.id,data) : SB.insert(T_SESS,data);
+    return LS.sessSave(data);
+  },
+  async sessDel(id) {
+    if(USE_SB) return SB.del(T_SESS,id);
+    return LS.sessDel(id);
+  },
+  async getPW() {
+    if(USE_SB){
+      const r=await SB.list(T_CFG,'id=eq.password');
+      if(r?.length) return r[0].value||'123';
+      await SB.insert(T_CFG,{id:'password',value:'123'}); return '123';
+    }
+    const r=LS.cfgGet('password'); return r?r.value:'123';
+  },
+  async setPW(v) {
+    if(USE_SB) return SB.upsert(T_CFG,{id:'password',value:v});
+    return LS.cfgSet('password',v);
+  },
+};
+
+/* ================================================================
+   HLA 파싱 & DSA 탐지
+================================================================ */
+function parseHLATyping(input,locus){
+  if(!input?.trim()) return [];
+  return input.split(',').map(s=>s.trim()).filter(Boolean).map(p=>{
+    const u=p.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    return u ? (u.startsWith(locus.toUpperCase())?u:locus.toUpperCase()+u) : null;
+  }).filter(Boolean);
+}
+function getDonorHLA(){
+  return [...parseHLATyping($('hla-a').value,'A'),...parseHLATyping($('hla-b').value,'B'),...parseHLATyping($('hla-dr').value,'DR'),...parseHLATyping($('hla-dq').value,'DQ')];
+}
+function parsePRAWithStrength(praString){
+  if(!praString) return [];
+  const results=[]; const lines=praString.split(/[\r\n]+/); let cur='Moderate';
+  const kwMap={strong:'Strong',moderate:'Moderate',mild:'Mild',weak:'Weak'};
+  for(const line of lines){
+    const t=line.trim(); if(!t) continue;
+    const m=t.match(/^(strong|moderate|mild|weak)\s*/i);
+    if(m){ cur=kwMap[m[1].toLowerCase()]; parseAlleles(t.slice(m[0].length).trim(),cur,results); }
+    else { parseAlleles(t,cur,results); }
+  }
+  return results;
+}
+function parseAlleles(str,strength,results){
+  if(!str) return;
+  str.split(',').map(s=>s.trim()).filter(Boolean).forEach(a=>{
+    const n=a.toUpperCase().replace(/[^A-Z0-9]/g,''); if(n) results.push({allele:n,strength});
+  });
+}
+function detectDSA(donorHLA,praString){
+  if(!donorHLA?.length||!praString?.trim()) return [];
+  const pra=parsePRAWithStrength(praString); const matches=[];
+  for(const d of donorHLA) for(const p of pra) if(d===p.allele) matches.push({donor:d,antibody:p.allele,strength:p.strength});
+  return matches;
+}
+function groupDSA(matches){
+  const g={Strong:[],Moderate:[],Mild:[],Weak:[]};
+  matches.forEach(m=>{ if(g[m.strength]) g[m.strength].push(m.antibody); });
+  const r=[];
+  if(g.Strong.length)   r.push({cls:'s-strong',   text:'Strong: '+g.Strong.join(', ')});
+  if(g.Moderate.length) r.push({cls:'s-moderate',  text:'Moderate: '+g.Moderate.join(', ')});
+  if(g.Mild.length)     r.push({cls:'s-mild',      text:'Mild: '+g.Mild.join(', ')});
+  if(g.Weak.length)     r.push({cls:'s-weak',      text:'Weak: '+g.Weak.join(', ')});
+  return r;
+}
+
+/* ================================================================
+   Recipient 테이블
+================================================================ */
+function addRow(name,pra){
+  name=name||''; pra=pra||'';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td class="col-name"><input type="text" class="r-name" value="${esc(name)}" placeholder="이름"/></td>
+    <td class="col-pra"><textarea class="r-pra" placeholder="예)\nStrong A2, B35\nModerate DR4\nMild DQ7\n\n또는: A2, B35, DR4">${esc(pra)}</textarea></td>
+    <td class="col-flag"><span class="badge badge-pend">—</span></td>
+    <td class="col-result"><span style="color:#94a3b8;font-size:12px">분석 전</span></td>
+    <td class="col-del"><button class="btn-del" title="삭제">✕</button></td>`;
+  tr.querySelector('.btn-del').addEventListener('click',()=>{ tr.remove(); scheduleSave(); });
+  tr.querySelector('.r-name').addEventListener('input',scheduleSave);
+  tr.querySelector('.r-pra').addEventListener('input',scheduleSave);
+  $('tbody').appendChild(tr); return tr;
+}
+function initRows(n){ for(let i=0;i<n;i++) addRow(); }
+
+function runAnalysis(){
+  const donor=getDonorHLA();
+  if(!donor.length){ alert('Donor HLA Typing을 입력해 주세요.\n\n입력 방법:\n• A칸: 2, 24  (숫자만)\n• A칸: A2, A24  (접두사 포함)\n\nHLA-A, B, DR, DQ 중 하나 이상 입력해야 합니다.'); return; }
+  $('tbody').querySelectorAll('tr').forEach(tr=>{
+    const pra=tr.querySelector('.r-pra').value.trim();
+    const flagTd=tr.querySelector('.col-flag'), resTd=tr.querySelector('.col-result');
+    if(!pra){ flagTd.innerHTML='<span class="badge badge-pend">—</span>'; resTd.innerHTML='<span style="color:#94a3b8;font-size:12px">PRA 없음</span>'; tr.dataset.s='none'; tr.dataset.d='[]'; return; }
+    const matches=detectDSA(donor,pra);
+    if(matches.length>0){
+      flagTd.innerHTML='<span class="badge badge-pos">있음</span>';
+      resTd.innerHTML=groupDSA(matches).map(l=>`<div class="dsa-line ${l.cls}">${esc(l.text)}</div>`).join('');
+      tr.dataset.s='pos'; tr.dataset.d=JSON.stringify(matches);
+    } else {
+      flagTd.innerHTML='<span class="badge badge-neg">없음</span>';
+      resTd.innerHTML='<span class="badge badge-neg">DSA 없음</span>';
+      tr.dataset.s='neg'; tr.dataset.d='[]';
+    }
+  });
+  doSave();
+}
+function resetAll(){ ['hla-a','hla-b','hla-dr','hla-dq'].forEach(id=>$(id).value=''); $('tbody').innerHTML=''; initRows(3); sessionId=null; setStatus('—',''); }
+
+/* ================================================================
+   자동저장
+================================================================ */
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,1500); }
+['hla-a','hla-b','hla-dr','hla-dq'].forEach(id=>$(id).addEventListener('input',scheduleSave));
+
+function collectSession(){
+  const rows=[];
+  $('tbody').querySelectorAll('tr').forEach(tr=>{ rows.push({name:tr.querySelector('.r-name').value.trim(),pra:tr.querySelector('.r-pra').value.trim(),s:tr.dataset.s||'pending',d:tr.dataset.d||'[]'}); });
+  return { ...(sessionId?{id:sessionId}:{}), donor_hla_a:$('hla-a').value.trim(), donor_hla_b:$('hla-b').value.trim(), donor_hla_dr:$('hla-dr').value.trim(), donor_hla_dq:$('hla-dq').value.trim(), recipients:JSON.stringify(rows), saved_at:Date.now() };
+}
+
+async function doSave(){
+  const data=collectSession();
+  const recs=safeJSON(data.recipients,[]);
+  if(!data.donor_hla_a&&!data.donor_hla_b&&!data.donor_hla_dr&&!data.donor_hla_dq&&!recs.some(r=>r.name||r.pra)) return;
+  setStatus('저장 중…','saving');
+  try {
+    const saved=await DB.sessSave(data);
+    sessionId=saved.id;
+    setStatus('✓ 저장됨 · '+fmtTime(Date.now()),'saved');
+    upsertHist(saved);
+  } catch(e){ console.error(e); setStatus('저장 오류','error'); }
+}
+function setStatus(txt,cls){ const el=$('save-status'); el.textContent=txt; el.className=cls||''; }
+
+/* ================================================================
+   이력
+================================================================ */
+async function loadHist(){
+  try{ histData=await DB.sessList(); renderHist(); }
+  catch(e){ showHistErr('불러오기 실패: '+e.message); }
+}
+function showHistErr(msg){ $('hist-list').innerHTML=`<p class="h-empty">${esc(msg)}</p>`; }
+function hlaLabel(s){ const p=[]; if(s.donor_hla_a)p.push('A:'+s.donor_hla_a); if(s.donor_hla_b)p.push('B:'+s.donor_hla_b); if(s.donor_hla_dr)p.push('DR:'+s.donor_hla_dr); if(s.donor_hla_dq)p.push('DQ:'+s.donor_hla_dq); return p.join(' | ')||'(HLA 미입력)'; }
+
+function renderHist(){
+  const el=$('hist-list');
+  if(!histData.length){ el.innerHTML='<p class="h-empty">저장된 내역이 없습니다.</p>'; return; }
+  el.innerHTML=histData.map(s=>{
+    const recs=safeJSON(s.recipients,[]); const dsaCnt=recs.filter(r=>r.s==='pos').length;
+    const active=s.id===sessionId?' active':'';
+    return `<div class="h-item${active}">
+      <div class="h-hla">${esc(hlaLabel(s))}</div>
+      <div class="h-meta"><span>${fmtTime(s.saved_at||s.created_at)}</span><span>수혜자 ${recs.length}명</span>${dsaCnt>0?`<span class="h-dsa">DSA ${dsaCnt}명</span>`:''}</div>
+      <div class="h-btns">
+        <button class="h-btn h-btn-load" onclick="loadSess('${esc(s.id)}')">불러오기</button>
+        <button class="h-btn h-btn-del"  onclick="delSess('${esc(s.id)}')">삭제</button>
+      </div></div>`;
+  }).join('');
+}
+function upsertHist(sess){ const i=histData.findIndex(h=>h.id===sess.id); if(i>=0)histData[i]=sess;else histData.unshift(sess); renderHist(); }
+
+async function loadSess(id){
+  try{ const s=await DB.sessGet(id); if(!s){alert('불러오기 실패');return;} restoreSess(s); closeHist(); }
+  catch(e){ alert('불러오기 오류: '+e.message); }
+}
+function restoreSess(s){
+  $('hla-a').value=$('hla-b').value=$('hla-dr').value=$('hla-dq').value='';
+  $('hla-a').value=s.donor_hla_a||''; $('hla-b').value=s.donor_hla_b||''; $('hla-dr').value=s.donor_hla_dr||''; $('hla-dq').value=s.donor_hla_dq||'';
+  $('tbody').innerHTML='';
+  const recs=safeJSON(s.recipients,[]);
+  if(!recs.length){ initRows(3); }
+  else { recs.forEach(r=>{ const tr=addRow(r.name||'',r.pra||''); tr.dataset.s=r.s||'pending'; tr.dataset.d=r.d||'[]';
+    const ft=tr.querySelector('.col-flag'), rt=tr.querySelector('.col-result');
+    if(r.s==='pos'){ ft.innerHTML='<span class="badge badge-pos">있음</span>'; rt.innerHTML=groupDSA(safeJSON(r.d,[])).map(l=>`<div class="dsa-line ${l.cls}">${esc(l.text)}</div>`).join(''); }
+    else if(r.s==='neg'){ ft.innerHTML='<span class="badge badge-neg">없음</span>'; rt.innerHTML='<span class="badge badge-neg">DSA 없음</span>'; }
+  }); }
+  sessionId=s.id; setStatus('✓ 불러옴 · '+fmtTime(s.saved_at||s.created_at),'saved');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function delSess(id){
+  if(!confirm('이 내역을 삭제하시겠습니까?')) return;
+  try{ await DB.sessDel(id); histData=histData.filter(h=>h.id!==id); if(sessionId===id){sessionId=null;setStatus('—','');} renderHist(); }
+  catch(e){ alert('삭제 오류: '+e.message); }
+}
+function openHist(){ $('hist-panel').classList.add('open'); $('hist-overlay').style.display='block'; loadHist(); }
+function closeHist(){ $('hist-panel').classList.remove('open'); $('hist-overlay').style.display='none'; }
+
+/* ================================================================
+   CSV 내보내기
+================================================================ */
+function exportCSV(){
+  const donor=getDonorHLA();
+  const rows=[['순번','이름','PRA','DSA 여부','Strong','Moderate','Mild','Weak']];
+  $('tbody').querySelectorAll('tr').forEach((tr,i)=>{
+    const name=tr.querySelector('.r-name').value.trim()||'—';
+    const pra=tr.querySelector('.r-pra').value.trim()||'—';
+    const status=tr.dataset.s||'pending';
+    const g={Strong:[],Moderate:[],Mild:[],Weak:[]}; let dsaYN='미분석';
+    if(status==='pos'){ dsaYN='있음'; safeJSON(tr.dataset.d,[]).forEach(m=>{ if(g[m.strength])g[m.strength].push(m.antibody); }); }
+    else if(status==='neg'){ dsaYN='없음'; }
+    else if(pra!=='—'){ const m=detectDSA(donor,pra); dsaYN=m.length>0?'있음':'없음'; m.forEach(x=>{ if(g[x.strength])g[x.strength].push(x.antibody); }); }
+    rows.push([i+1,name,pra,dsaYN,g.Strong.join(', ')||'—',g.Moderate.join(', ')||'—',g.Mild.join(', ')||'—',g.Weak.join(', ')||'—']);
+  });
+  const now=new Date();
+  const ymd=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const hm=`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const meta=[[`저장일시: ${now.toLocaleString('ko-KR')}`],[`Donor  A:${$('hla-a').value||'—'}  B:${$('hla-b').value||'—'}  DR:${$('hla-dr').value||'—'}  DQ:${$('hla-dq').value||'—'}`],[]];
+  const csv='\uFEFF'+ [...meta,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})); a.download=`DSA_Result_${ymd}_${hm}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ================================================================
+   비밀번호
+================================================================ */
+async function tryLogin(){
+  const entered=$('pw-input').value.trim();
+  if(!entered){ showPwErr('비밀번호를 입력하세요'); return; }
+  try{
+    const stored=await DB.getPW();
+    if(entered===stored){
+      $('pw-gate').style.display='none'; $('app').style.display='flex';
+      if(!USE_SB) $('cfg-banner').style.display='block';
+      loadHist();
+    } else {
+      showPwErr('비밀번호가 틀렸습니다');
+      $('pw-input').classList.add('shake'); setTimeout(()=>$('pw-input').classList.remove('shake'),400);
+    }
+  } catch(e){ showPwErr('연결 오류: '+e.message); }
+}
+function showPwErr(msg){ $('pw-err').textContent=msg; setTimeout(()=>$('pw-err').textContent='',3000); }
+
+async function changePW(){
+  const cur=$('pw-cur').value.trim(), nw=$('pw-new').value.trim(), con=$('pw-con').value.trim();
+  if(!cur||!nw||!con){ setPwMsg('모든 항목을 입력하세요','err'); return; }
+  if(nw.length<2){ setPwMsg('새 비밀번호는 2자 이상','err'); return; }
+  if(nw!==con){ setPwMsg('새 비밀번호가 일치하지 않습니다','err'); return; }
+  try{
+    const stored=await DB.getPW();
+    if(cur!==stored){ setPwMsg('현재 비밀번호가 틀렸습니다','err'); return; }
+    await DB.setPW(nw);
+    ['pw-cur','pw-new','pw-con'].forEach(id=>$(id).value='');
+    setPwMsg('비밀번호가 변경되었습니다 ✅','ok');
+  } catch(e){ setPwMsg('저장 실패: '+e.message,'err'); }
+}
+function setPwMsg(txt,cls){ $('pw-chg-msg').textContent=txt; $('pw-chg-msg').className=cls; setTimeout(()=>{ $('pw-chg-msg').textContent=''; $('pw-chg-msg').className=''; },4000); }
+
+/* ================================================================
+   이벤트 바인딩
+================================================================ */
+$('pw-btn').addEventListener('click',tryLogin);
+$('pw-input').addEventListener('keydown',e=>{ if(e.key==='Enter') tryLogin(); });
+$('pw-chg-toggle').addEventListener('click',()=>{ const b=$('pw-chg-body'),open=b.style.display==='block'; b.style.display=open?'none':'block'; $('pw-arrow').textContent=open?'▼':'▲'; });
+$('btn-pw-save').addEventListener('click',changePW);
+['pw-cur','pw-new','pw-con'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') changePW(); }));
+$('btn-analyze').addEventListener('click',runAnalysis);
+$('btn-add').addEventListener('click',()=>addRow());
+$('btn-export').addEventListener('click',exportCSV);
+$('btn-reset').addEventListener('click',()=>{ if(confirm('현재 내용을 모두 초기화하시겠습니까?')) resetAll(); });
+$('btn-new').addEventListener('click',()=>{ if(confirm('현재 내용을 저장하고 새 분석을 시작하시겠습니까?')) doSave().then(()=>{ sessionId=null; resetAll(); }); });
+$('btn-history').addEventListener('click',openHist);
+$('btn-hp-close').addEventListener('click',closeHist);
+$('hist-overlay').addEventListener('click',closeHist);
+setInterval(()=>{ if($('hist-panel').classList.contains('open')) loadHist(); },30000);
+
+initRows(3);
+</script>
+</body>
+</html>
